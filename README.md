@@ -1,6 +1,4 @@
-# Halftone Effect Editor
-
-![Halftone Editor Demo]([https://quload.com/file/QuLoad_XNDjXWF51F.mp4])
+# Halftone Effect Editor inspired from SuperBowl_Ad from Open AI
 
 Inspired by OpenAI's iconic Super Bowl commercial, this web-based Halftone Effect Editor transforms your images and videos into stunning halftone art. The editor recreates that mesmerizing dotted effect seen in the commercial, allowing you to create your own artistic interpretations.
 
@@ -15,7 +13,7 @@ Inspired by OpenAI's iconic Super Bowl commercial, this web-based Halftone Effec
   - Gamma
   - Smoothing
 
-### 🎬 Video Support
+###  Video Support
 - **Video Frame Selection**: Precisely choose frames for PNG export
 - **Live Preview**: Real-time preview of halftone effect on video
 - **Video Recording**: Capture your halftone animations
@@ -32,45 +30,6 @@ Inspired by OpenAI's iconic Super Bowl commercial, this web-based Halftone Effec
 - **Video Export**: WebM format with VP9 codec
 - **Custom Resolution**: 2x scale for higher quality exports
 
-##  Getting Started
-
-1. **Open the Editor**:
-   ```bash
-   # Clone the repository
-   git clone https://github.com/yourusername/halftone-editor.git
-   
-   # Navigate to the project
-   cd halftone-editor
-   ```
-
-2. **Launch the Application**:
-   - Open `index.html` in a modern web browser
-   - Or serve using a local server:
-     ```bash
-     python -m http.server 8000
-     ```
-
-3. **Start Creating**:
-   - Drop an image or video
-   - Adjust the controls
-   - Export your creation
-
-##  How to Use
-
-1. **Upload Media**:
-   - Drag and drop or click to upload
-   - Supports images (PNG, JPG) and videos (MP4, WebM)
-
-2. **Adjust Parameters**:
-   - Use sliders to control effect intensity
-   - Experiment with different dithering methods
-   - Fine-tune grid size for desired detail
-
-3. **Export**:
-   - Choose PNG for still images
-   - Select video export for animations
-   - Use frame selection for precise video moments
-
 ##  Technical Details
 
 ### Built With
@@ -85,7 +44,7 @@ Inspired by OpenAI's iconic Super Bowl commercial, this web-based Halftone Effec
 - Efficient video frame processing
 - Responsive design
 
-## 🎯 Use Cases
+##  Use Cases
 
 - Create artistic versions of photos
 - Generate unique social media content
@@ -93,7 +52,7 @@ Inspired by OpenAI's iconic Super Bowl commercial, this web-based Halftone Effec
 - Design retro-style graphics
 - Educational tool for understanding halftone patterns
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Feel free to:
 - Open issues
@@ -101,14 +60,8 @@ Contributions are welcome! Feel free to:
 - Suggest new features
 - Improve documentation
 
-## 📝 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Inspired by OpenAI's Super Bowl commercial
-- Built with modern web technologies
-- Special thanks to the open-source community
 
 ---
