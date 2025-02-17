@@ -9,6 +9,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const ditherType        = document.getElementById('ditherType');
   const resetButton       = document.getElementById('resetButton');
   const saveButton        = document.getElementById('saveButton');
+  const exportType        = document.getElementById('exportType');
+  const videoFrameControls = document.getElementById('videoFrameControls');
+  const frameSlider       = document.getElementById('frameSlider');
+  const frameTime         = document.getElementById('frameTime');
+  const framePreview      = document.getElementById('framePreview');
   
   const gridSizeVal       = document.getElementById('gridSizeVal');
   const brightnessVal     = document.getElementById('brightnessVal');
@@ -23,6 +28,63 @@ document.addEventListener('DOMContentLoaded', function() {
   let videoElement = null;
   let isVideo = false;
   let animationFrameId;
+  let isPaused = false;
+  let currentFrame = 0;
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let isRecording = false;
+  let recordingStartTime = 0;
+  
+  // Recording settings
+  const recordingFPS = 30;
+  const recordingInterval = 1000 / recordingFPS;
+  
+  function updateRecordingUI(recording) {
+    saveButton.textContent = recording ? 'Stop Recording' : 'Start Recording';
+    saveButton.classList.toggle('recording', recording);
+  }
+
+  function startVideoRecording() {
+    const stream = halftoneCanvas.captureStream(recordingFPS);
+    mediaRecorder = new MediaRecorder(stream, {
+      mimeType: 'video/webm;codecs=vp9',
+      videoBitsPerSecond: 5000000 // 5 Mbps
+    });
+
+    recordedChunks = [];
+    isRecording = true;
+    recordingStartTime = Date.now();
+    updateRecordingUI(true);
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        recordedChunks.push(event.data);
+      }
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'halftone-video.webm';
+      link.click();
+      URL.revokeObjectURL(url);
+      isRecording = false;
+      updateRecordingUI(false);
+    };
+
+    // Start recording frames at regular intervals
+    mediaRecorder.start(1000); // Collect data every second
+  }
+
+  function stopVideoRecording() {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      isRecording = false;
+      updateRecordingUI(false);
+    }
+  }
   
   // Default parameter values
   const defaults = {
@@ -66,12 +128,33 @@ document.addEventListener('DOMContentLoaded', function() {
   
   fileUpload.addEventListener('change', handleFileUpload);
   
+  // Update frame preview based on slider position
+  function updateFramePreview() {
+    if (!videoElement || !isVideo) return;
+    
+    const time = parseFloat(frameSlider.value);
+    videoElement.currentTime = time;
+    
+    // Format time as MM:SS.ms
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    const ms = Math.floor((time % 1) * 100);
+    frameTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+  }
+
   function handleFileUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
     const fileURL = URL.createObjectURL(file);
+    
+    // Reset export type and hide frame controls
+    exportType.value = 'png';
+    videoFrameControls.style.display = 'none';
     if (file.type.startsWith('video/')) {
       isVideo = true;
+      exportType.value = 'video'; // Default to video export for video files
+      saveButton.textContent = 'Start Recording';
+      
       if (videoElement) {
         videoElement.src = fileURL;
       } else {
@@ -83,17 +166,61 @@ document.addEventListener('DOMContentLoaded', function() {
         videoElement.muted = true;
         videoElement.playsInline = true;
         videoElement.setAttribute("webkit-playsinline", "true");
+        
+        // Initialize frame preview canvas
+        const previewCtx = framePreview.getContext('2d');
+        framePreview.width = framePreview.clientWidth;
+        framePreview.height = framePreview.clientHeight;
+        
+        videoElement.addEventListener('loadedmetadata', () => {
+          // Set up frame slider once video metadata is loaded
+          frameSlider.min = 0;
+          frameSlider.max = videoElement.duration;
+          frameSlider.step = 0.1;
+          
+          // Update preview dimensions with correct aspect ratio
+          const aspectRatio = videoElement.videoWidth / videoElement.videoHeight;
+          framePreview.height = framePreview.width / aspectRatio;
+          
+          updateFramePreview();
+        });
+        
+        // Event listeners for accurate frame previews
+        videoElement.addEventListener('seeked', () => {
+          const ctx = framePreview.getContext('2d');
+          ctx.drawImage(videoElement, 0, 0, framePreview.width, framePreview.height);
+          processFrame();
+        });
+        
+        videoElement.addEventListener('timeupdate', () => {
+          if (isPaused || exportType.value === 'png') {
+            const ctx = framePreview.getContext('2d');
+            ctx.drawImage(videoElement, 0, 0, framePreview.width, framePreview.height);
+            processFrame();
+          }
+        });
+        
         videoElement.addEventListener('loadeddata', () => {
           setupCanvasDimensions(videoElement.videoWidth, videoElement.videoHeight);
-          videoElement.play();
-          processVideoFrame();
+          
+          if (exportType.value === 'png') {
+            videoFrameControls.style.display = 'block';
+            videoElement.pause();
+            isPaused = true;
+            updateFramePreview();
+          } else {
+            videoElement.play();
+            processVideoFrame();
+          }
         });
+        
         videoElement.addEventListener('error', (e) => {
           console.error("Error loading video:", e);
         });
       }
     } else if (file.type.startsWith('image/')) {
       isVideo = false;
+      saveButton.textContent = 'Export PNG';
       if (videoElement) {
         cancelAnimationFrame(animationFrameId);
         videoElement.pause();
@@ -326,15 +453,59 @@ document.addEventListener('DOMContentLoaded', function() {
     updateAndProcess();
   });
   
+  // Handle frame selection
+  frameSlider.addEventListener('input', () => {
+    if (!videoElement) return;
+    isPaused = true;
+    videoElement.pause();
+    updateFramePreview();
+  });
+
+  // Handle export type change
+  exportType.addEventListener('change', () => {
+    if (isVideo) {
+      const isPNG = exportType.value === 'png';
+      videoFrameControls.style.display = isPNG ? 'block' : 'none';
+      saveButton.textContent = isPNG ? 'Export PNG' : 'Start Recording';
+      
+      if (!isPNG) {
+        // Resume video playback when switching to video export
+        videoElement.play();
+        isPaused = false;
+        processVideoFrame();
+      } else {
+        // Pause and show current frame when switching to PNG
+        videoElement.pause();
+        isPaused = true;
+        updateFramePreview();
+      }
+    }
+  });
+
   saveButton.addEventListener('click', () => {
     if (!imageElement && !videoElement) return;
-    const exportCanvas = document.createElement('canvas');
-    generateHalftone(exportCanvas, 2);
-    const dataURL = exportCanvas.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.href = dataURL;
-    link.download = 'halftone.png';
-    link.click();
+    
+    if (exportType.value === 'png') {
+      const exportCanvas = document.createElement('canvas');
+      generateHalftone(exportCanvas, 2);
+      const dataURL = exportCanvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = dataURL;
+      link.download = 'halftone.png';
+      link.click();
+      
+      // Resume video playback if it was playing
+      if (isVideo && !isPaused) {
+        videoElement.play();
+      }
+    } else if (exportType.value === 'video' && isVideo) {
+      // Toggle recording state
+      if (!isRecording) {
+        startVideoRecording();
+      } else {
+        stopVideoRecording();
+      }
+    }
   });
   
   setupCanvasDimensions(800, 600);
@@ -344,7 +515,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Automatically load the default video.
   (function loadDefaultVideo() {
-    const videoURL = "https://quload.com/file/QuLoad_XNDjXWF51F.mp4";
+    const videoURL = "https://i.imgur.com/5PrJCc2.mp4";
     isVideo = true;
     videoElement = document.createElement('video');
     videoElement.crossOrigin = "anonymous";

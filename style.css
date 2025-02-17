@@ -178,6 +178,29 @@ input[type="range"]::-webkit-slider-thumb:hover {
   background-color: #e0e0e0;
 }
 
+/* Recording Button States */
+.btn.recording {
+  background-color: #dc3545;
+  color: white;
+  animation: pulse 1.5s infinite;
+}
+
+.btn.recording:hover {
+  background-color: #bd2130;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+  }
+}
+
 /* Main Content Area */
 .main-content {
   flex: 1;
@@ -201,6 +224,54 @@ canvas {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+}
+
+/* Frame Preview Styles */
+.preview-container {
+  margin-top: var(--spacing-unit);
+  border: 1px solid #e0e0e0;
+  border-radius: var(--border-radius);
+  padding: 8px;
+  background: #fff;
+}
+
+#framePreview {
+  width: 100%;
+  max-height: 200px;
+  background: #fafafa;
+  border-radius: 4px;
+  display: block;
+}
+
+#videoFrameControls {
+  margin-top: var(--spacing-unit);
+  padding-top: var(--spacing-unit);
+  border-top: 1px solid #e0e0e0;
+  width: 100%;
+}
+
+.preview-container {
+  margin-top: var(--spacing-unit);
+  border: 1px solid #e0e0e0;
+  border-radius: var(--border-radius);
+  padding: 8px;
+  background: #fff;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Export Panel Styles */
+.export-panel h3 {
+  margin-top: 0;
+}
+
+#videoFrameControls {
+  margin-top: var(--spacing-unit);
+  padding-top: var(--spacing-unit);
+  border-top: 1px solid #e0e0e0;
 }
 
 /* Responsive Design */

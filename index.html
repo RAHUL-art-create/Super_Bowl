@@ -80,10 +80,33 @@
         </div>
       </div>
 
+      <!-- Export Options -->
+      <div class="panel export-panel">
+        <h3>Export Options</h3>
+        <div class="control-group">
+          <select id="exportType" class="dither-select">
+            <option value="png">Export as PNG</option>
+            <option value="video">Export as Video</option>
+          </select>
+        </div>
+        
+        <!-- Video Frame Selection (shows only when video is loaded) -->
+        <div id="videoFrameControls" class="control-group" style="display: none;">
+          <label for="frameSlider">Frame Selection</label>
+          <div class="slider-container">
+            <input type="range" id="frameSlider" min="0" max="100" value="0">
+            <span class="value-display" id="frameTime">0:00</span>
+          </div>
+          <div class="preview-container">
+            <canvas id="framePreview"></canvas>
+          </div>
+        </div>
+      </div>
+
       <!-- Action Buttons -->
       <div class="panel action-panel">
         <button id="resetButton" class="btn btn-secondary">Reset All</button>
-        <button id="saveButton" class="btn btn-primary">Export PNG</button>
+        <button id="saveButton" class="btn btn-primary">Export</button>
       </div>
     </aside>
 
