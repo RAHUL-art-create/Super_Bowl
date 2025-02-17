@@ -28,9 +28,9 @@ https://github.com/user-attachments/assets/6589340b-73b5-4677-a3ca-91b1266a8321
 - **None**: Clean dot pattern
 
 ###  Export Options
-- **PNG Export**: High-quality still images
-- **Video Export**: WebM format with VP9 codec
-- **Custom Resolution**: 2x scale for higher quality exports
+- **PNG Export**: High-quality still images for PNG's , based on your choosen frame from videos too
+- **Video Export**: WebM format with VP9 codec _ 60FPS
+- **Custom Resolution**: Device resolution
 
 ##  Technical Details
 
