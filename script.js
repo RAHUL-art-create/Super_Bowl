@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let recordingStartTime = 0;
   
   // Recording settings
-  const recordingFPS = 30;
+  const recordingFPS = 60;
   const recordingInterval = 1000 / recordingFPS;
   
   function updateRecordingUI(recording) {
@@ -169,8 +169,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Initialize frame preview canvas
         const previewCtx = framePreview.getContext('2d');
-        framePreview.width = framePreview.clientWidth;
-        framePreview.height = framePreview.clientHeight;
         
         videoElement.addEventListener('loadedmetadata', () => {
           // Set up frame slider once video metadata is loaded
@@ -178,9 +176,16 @@ document.addEventListener('DOMContentLoaded', function() {
           frameSlider.max = videoElement.duration;
           frameSlider.step = 0.1;
           
-          // Update preview dimensions with correct aspect ratio
+          // Calculate dimensions maintaining aspect ratio within max height
           const aspectRatio = videoElement.videoWidth / videoElement.videoHeight;
-          framePreview.height = framePreview.width / aspectRatio;
+          const maxPreviewHeight = 150; // Match CSS max-height
+          framePreview.width = framePreview.parentElement.clientWidth - 16; // Account for padding
+          framePreview.height = Math.min(framePreview.width / aspectRatio, maxPreviewHeight);
+          
+          // If height is capped, adjust width to maintain aspect ratio
+          if (framePreview.height === maxPreviewHeight) {
+            framePreview.width = maxPreviewHeight * aspectRatio;
+          }
           
           updateFramePreview();
         });
@@ -235,14 +240,27 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   function setupCanvasDimensions(width, height) {
-    const maxWidth = window.innerWidth * 0.8;
-    const maxHeight = window.innerHeight * 0.8;
-    let newWidth = width, newHeight = height;
+    const container = document.querySelector('.canvas-container');
+    const maxWidth = container.clientWidth;
+    const maxHeight = container.clientHeight;
+    const aspectRatio = width / height;
+    
+    let newWidth = width;
+    let newHeight = height;
+    
+    // Scale down if needed while maintaining aspect ratio
     if (width > maxWidth || height > maxHeight) {
-      const ratio = Math.min(maxWidth / width, maxHeight / height);
-      newWidth = width * ratio;
-      newHeight = height * ratio;
+      if (maxWidth / maxHeight > aspectRatio) {
+        // Height is the limiting factor
+        newHeight = maxHeight;
+        newWidth = maxHeight * aspectRatio;
+      } else {
+        // Width is the limiting factor
+        newWidth = maxWidth;
+        newHeight = maxWidth / aspectRatio;
+      }
     }
+    
     halftoneCanvas.width = newWidth;
     halftoneCanvas.height = newHeight;
   }

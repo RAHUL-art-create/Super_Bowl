@@ -233,14 +233,22 @@ canvas {
   border-radius: var(--border-radius);
   padding: 8px;
   background: #fff;
+  width: calc(100% - 16px); /* Account for padding */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 #framePreview {
   width: 100%;
-  max-height: 200px;
+  height: auto;
+  max-height: 150px;
   background: #fafafa;
   border-radius: 4px;
   display: block;
+  object-fit: contain;
 }
 
 #videoFrameControls {
@@ -248,19 +256,7 @@ canvas {
   padding-top: var(--spacing-unit);
   border-top: 1px solid #e0e0e0;
   width: 100%;
-}
-
-.preview-container {
-  margin-top: var(--spacing-unit);
-  border: 1px solid #e0e0e0;
-  border-radius: var(--border-radius);
-  padding: 8px;
-  background: #fff;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* Export Panel Styles */
