@@ -279,8 +279,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
   function setupCanvasDimensions(width, height) {
     const container = document.querySelector('.canvas-container');
-    const maxWidth = container.clientWidth;
-    const maxHeight = container.clientHeight;
+    const maxWidth = container.clientWidth - 32; // Account for padding
+    const maxHeight = container.clientHeight - 32; // Account for padding
     const aspectRatio = width / height;
     
     let newWidth = width;
@@ -299,8 +299,14 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
+    // Ensure minimum dimensions
+    newWidth = Math.max(newWidth, 200);
+    newHeight = Math.max(newHeight, 200);
+    
     halftoneCanvas.width = newWidth;
     halftoneCanvas.height = newHeight;
+    halftoneCanvas.style.width = `${newWidth}px`;
+    halftoneCanvas.style.height = `${newHeight}px`;
   }
   
   function processFrame() {
@@ -568,6 +574,16 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   });
+  
+  // Add resize handler
+  window.addEventListener('resize', debounce(() => {
+    if (videoElement) {
+        setupCanvasDimensions(videoElement.videoWidth, videoElement.videoHeight);
+    } else if (imageElement) {
+        setupCanvasDimensions(imageElement.width, imageElement.height);
+    }
+    processFrame();
+  }, 250));
   
   setupCanvasDimensions(800, 600);
   const ctx = halftoneCanvas.getContext('2d');
