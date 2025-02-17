@@ -45,37 +45,57 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function startVideoRecording() {
+    // Reset video to beginning before starting recording
+    videoElement.currentTime = 0;
+    videoElement.play();
+    
     const stream = halftoneCanvas.captureStream(recordingFPS);
     mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'video/webm;codecs=vp9',
-      videoBitsPerSecond: 5000000 // 5 Mbps
+        mimeType: 'video/webm;codecs=vp9',
+        videoBitsPerSecond: 5000000
     });
 
     recordedChunks = [];
     isRecording = true;
     recordingStartTime = Date.now();
     updateRecordingUI(true);
+    
+    // Add recording time display
+    const recordingTimeDisplay = document.createElement('div');
+    recordingTimeDisplay.id = 'recordingTime';
+    recordingTimeDisplay.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 4px;';
+    halftoneCanvas.parentElement.appendChild(recordingTimeDisplay);
+    
+    function updateRecordingTime() {
+        if (!isRecording) return;
+        const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        recordingTimeDisplay.textContent = `Recording: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        requestAnimationFrame(updateRecordingTime);
+    }
+    updateRecordingTime();
 
     mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        recordedChunks.push(event.data);
-      }
+        if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+        }
     };
 
     mediaRecorder.onstop = () => {
-      const blob = new Blob(recordedChunks, { type: 'video/webm' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'halftone-video.webm';
-      link.click();
-      URL.revokeObjectURL(url);
-      isRecording = false;
-      updateRecordingUI(false);
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'halftone-video.webm';
+        link.click();
+        URL.revokeObjectURL(url);
+        isRecording = false;
+        updateRecordingUI(false);
+        recordingTimeDisplay.remove();
     };
 
-    // Start recording frames at regular intervals
-    mediaRecorder.start(1000); // Collect data every second
+    mediaRecorder.start(1000);
   }
 
   function stopVideoRecording() {
@@ -130,7 +150,10 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Update frame preview based on slider position
   function updateFramePreview() {
-    if (!videoElement || !isVideo) return;
+    if (!videoElement || !isVideo) {
+        console.log("No video element or not a video file.");
+        return;
+    }
     
     const time = parseFloat(frameSlider.value);
     videoElement.currentTime = time;
@@ -140,6 +163,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const seconds = Math.floor(time % 60);
     const ms = Math.floor((time % 1) * 100);
     frameTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+
+    // Update preview canvas with current frame
+    const previewCtx = framePreview.getContext('2d');
+    const aspectRatio = videoElement.videoWidth / videoElement.videoHeight;
+    const containerWidth = framePreview.parentElement.clientWidth - 16;
+    const containerHeight = 150 - 16;
+    
+    let canvasWidth, canvasHeight;
+    if (containerWidth / containerHeight > aspectRatio) {
+        canvasHeight = containerHeight;
+        canvasWidth = containerHeight * aspectRatio;
+    } else {
+        canvasWidth = containerWidth;
+        canvasHeight = containerWidth / aspectRatio;
+    }
+    
+    framePreview.width = canvasWidth;
+    framePreview.height = canvasHeight;
+    previewCtx.drawImage(videoElement, 0, 0, canvasWidth, canvasHeight);
+    
+    // Immediately process the halftone frame
+    processFrame();
   }
 
   function handleFileUpload(e) {
@@ -176,31 +221,24 @@ document.addEventListener('DOMContentLoaded', function() {
           frameSlider.max = videoElement.duration;
           frameSlider.step = 0.1;
           
-          // Calculate dimensions maintaining aspect ratio within max height
-          const aspectRatio = videoElement.videoWidth / videoElement.videoHeight;
-          const maxPreviewHeight = 150; // Match CSS max-height
-          framePreview.width = framePreview.parentElement.clientWidth - 16; // Account for padding
-          framePreview.height = Math.min(framePreview.width / aspectRatio, maxPreviewHeight);
-          
-          // If height is capped, adjust width to maintain aspect ratio
-          if (framePreview.height === maxPreviewHeight) {
-            framePreview.width = maxPreviewHeight * aspectRatio;
+          // Show frame controls for video files
+          if (exportType.value === 'png') {
+            videoFrameControls.style.display = 'block';
+            videoElement.pause();
+            isPaused = true;
+            updateFramePreview();
           }
-          
-          updateFramePreview();
         });
         
         // Event listeners for accurate frame previews
         videoElement.addEventListener('seeked', () => {
-          const ctx = framePreview.getContext('2d');
-          ctx.drawImage(videoElement, 0, 0, framePreview.width, framePreview.height);
+          updateFramePreview();
           processFrame();
         });
         
         videoElement.addEventListener('timeupdate', () => {
           if (isPaused || exportType.value === 'png') {
-            const ctx = framePreview.getContext('2d');
-            ctx.drawImage(videoElement, 0, 0, framePreview.width, framePreview.height);
+            updateFramePreview();
             processFrame();
           }
         });
@@ -272,7 +310,9 @@ document.addEventListener('DOMContentLoaded', function() {
   
   function processVideoFrame() {
     if (!isVideo) return;
-    processFrame();
+    if (!isPaused) {
+        processFrame();
+    }
     animationFrameId = requestAnimationFrame(processVideoFrame);
   }
   
@@ -476,7 +516,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!videoElement) return;
     isPaused = true;
     videoElement.pause();
-    updateFramePreview();
+    // Use requestAnimationFrame to ensure smooth updates
+    requestAnimationFrame(() => {
+        updateFramePreview();
+    });
   });
 
   // Handle export type change
@@ -487,15 +530,15 @@ document.addEventListener('DOMContentLoaded', function() {
       saveButton.textContent = isPNG ? 'Export PNG' : 'Start Recording';
       
       if (!isPNG) {
-        // Resume video playback when switching to video export
         videoElement.play();
         isPaused = false;
         processVideoFrame();
       } else {
-        // Pause and show current frame when switching to PNG
         videoElement.pause();
         isPaused = true;
-        updateFramePreview();
+        requestAnimationFrame(() => {
+            updateFramePreview();
+        });
       }
     }
   });
