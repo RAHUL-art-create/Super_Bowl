@@ -2,14 +2,7 @@
 
 Inspired by OpenAI's iconic Super Bowl commercial, this web-based Halftone Effect Editor transforms your images and videos into stunning halftone art. The editor recreates that mesmerizing dotted effect seen in the commercial, allowing you to create your own artistic interpretations.
 
-## Ad by OpenAI
-
-[![Halftone Effect Preview](https://quload.com/file/QuLoad_18TxogoHfE.mp4)](https://quload.com/file/QuLoad_18TxogoHfE.mp4)
-
-<video controls>
-  <source src="https://quload.com/file/QuLoad_18TxogoHfE.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+https://github.com/user-attachments/assets/6589340b-73b5-4677-a3ca-91b1266a8321
 
 ##  Features
 
