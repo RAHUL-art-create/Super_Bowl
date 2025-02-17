@@ -227,6 +227,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   position: relative;
   padding: var(--spacing-unit);
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 canvas {
@@ -252,9 +253,7 @@ canvas {
   background: #fff;
   width: 100%;
   height: 150px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  position: relative;
   overflow: hidden;
   box-sizing: border-box;
 }
@@ -302,29 +301,18 @@ canvas {
   .main-content {
     min-height: 60vh;
     height: auto;
-    aspect-ratio: 16/9;
     margin-top: var(--spacing-unit);
   }
   
   .canvas-container {
     width: 100%;
     height: 100%;
+    min-height: 50vh;
     padding: calc(var(--spacing-unit) / 2);
   }
   
-  canvas {
-    max-width: 100%;
-    max-height: 100%;
-    width: auto !important;
-    height: auto !important;
-    object-fit: contain;
-  }
-  
-  /* Ensure preview container maintains aspect ratio */
   .preview-container {
-    aspect-ratio: 16/9;
-    height: auto;
-    min-height: 100px;
+    height: 120px;
   }
 }
 
@@ -334,72 +322,161 @@ canvas {
   }
   
   .main-content {
-    min-height: 50vh;
+    min-height: 40vh;
   }
   
-  .panel {
-    padding: calc(var(--spacing-unit) / 2);
+  .canvas-container {
+    min-height: 40vh;
+  }
+  
+  .preview-container {
+    height: 100px;
   }
 }
 
 .credits {
-  position: absolute;
+  position: fixed;
   bottom: 20px;
   right: 20px;
-  text-align: right;
-  z-index: 100;
-  overflow: hidden;
-  height: 24px; /* Height of one line of text */
-}
-
-.credits-text {
+  text-align: center;
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px;
   font-weight: 600;
+  background: rgba(145, 143, 143, 0.884);
+  padding: 8px 12px;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.credits-text {
   color: var(--primary-color);
   text-decoration: none;
+  display: flex;
+  gap: 8px;
+}
+
+.word-container {
+  perspective: 1000px;
   display: inline-block;
+}
+
+.word {
+  display: inline-block;
+  transform-style: preserve-3d;
   position: relative;
-  animation: slotMachine 4s infinite;
+  animation: none;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  transition: all 0.3s ease;
 }
 
-.credits-text::before,
-.credits-text::after {
-  content: 'Made by Rahul';
-  position: absolute;
-  width: 100%;
-  left: 0;
+.word.made {
+  animation: flipMade 3s infinite;
+  animation-delay: 0s;
+  background-image: linear-gradient(45deg, #2196F3, #d40000);
 }
 
-.credits-text::before {
-  top: -24px;
+.word.by {
+  animation: flipBy 3s infinite;
+  animation-delay: 1s;
+  background-image: linear-gradient(45deg, #101111, #e7eaec);
 }
 
-.credits-text::after {
-  top: 24px;
+.word.rahul {
+  animation: flipRahul 3s infinite;
+  animation-delay: 2s;
+  background-image: linear-gradient(45deg, #cf22df, #742fe4);
+}
+
+@keyframes flipMade {
+  0%, 30% {
+    transform: rotateX(0deg);
+    background-image: linear-gradient(45deg, #e72657, #db71a2);
+  }
+  40%, 50% {
+    transform: rotateX(360deg);
+    background-image: linear-gradient(135deg, #dd484f, #c221f3b2);
+  }
+  60%, 100% {
+    transform: rotateX(0deg);
+    background-image: linear-gradient(45deg, #2196F3, #00BCD4);
+  }
+}
+
+@keyframes flipBy {
+  0%, 30% {
+    transform: rotateX(0deg);
+    background-image: linear-gradient(45deg, #0c0b0c, #b4bbb4);
+  }
+  40%, 50% {
+    transform: rotateX(360deg);
+    background-image: linear-gradient(135deg, #e06cb0, #df1526);
+  }
+  60%, 100% {
+    transform: rotateX(0deg);
+    background-image: linear-gradient(45deg, #127380, #472cdf);
+  }
+}
+
+@keyframes flipRahul {
+  0%, 30% {
+    transform: rotateX(0deg);
+    background-image: linear-gradient(45deg, #e94545, #132c7c);
+  }
+  40%, 50% {
+    transform: rotateX(360deg);
+    background-image: linear-gradient(135deg, #f01e3a, #e46f38);
+  }
+  60%, 100% {
+    transform: rotateX(0deg);
+    background-image: linear-gradient(45deg, #e248a2, #f14abf);
+  }
+}
+
+.credits-text:hover .word {
+  animation-play-state: paused;
+  opacity: 0.8;
 }
 
 .credits-text:hover {
-  animation-play-state: paused;
-  color: var(--primary-dark);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
-@keyframes slotMachine {
-  0%, 100% {
-    transform: translateY(0);
-    opacity: 1;
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .credits {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    transform: none;
+    justify-content: center;
+    border-radius: 0;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 12px;
+    margin: 0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
   }
-  25% {
-    transform: translateY(-24px);
-    opacity: 0;
+  
+  .word {
+    font-size: 16px;
+    font-weight: 700;
   }
-  35% {
-    transform: translateY(24px);
-    opacity: 0;
+  
+  .credits-text {
+    gap: 12px;
   }
-  45%, 90% {
-    transform: translateY(0);
-    opacity: 1;
+}
+
+/* Fix for iOS Safari bottom bar */
+@supports (-webkit-touch-callout: none) {
+  .credits {
+    bottom: env(safe-area-inset-bottom, 0);
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
   }
 }

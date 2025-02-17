@@ -164,26 +164,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const ms = Math.floor((time % 1) * 100);
     frameTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
 
-    // Update preview canvas with current frame
-    const previewCtx = framePreview.getContext('2d');
-    const aspectRatio = videoElement.videoWidth / videoElement.videoHeight;
-    const containerWidth = framePreview.parentElement.clientWidth - 16;
-    const containerHeight = 150 - 16;
+    // Calculate preview dimensions maintaining aspect ratio
+    const container = framePreview.parentElement;
+    const containerWidth = container.clientWidth - 16;
+    const containerHeight = container.clientHeight - 16;
+    const videoAspectRatio = videoElement.videoWidth / videoElement.videoHeight;
     
-    let canvasWidth, canvasHeight;
-    if (containerWidth / containerHeight > aspectRatio) {
-        canvasHeight = containerHeight;
-        canvasWidth = containerHeight * aspectRatio;
+    let previewWidth, previewHeight;
+    if (containerWidth / containerHeight > videoAspectRatio) {
+        previewHeight = containerHeight;
+        previewWidth = containerHeight * videoAspectRatio;
     } else {
-        canvasWidth = containerWidth;
-        canvasHeight = containerWidth / aspectRatio;
+        previewWidth = containerWidth;
+        previewHeight = containerWidth / videoAspectRatio;
     }
     
-    framePreview.width = canvasWidth;
-    framePreview.height = canvasHeight;
-    previewCtx.drawImage(videoElement, 0, 0, canvasWidth, canvasHeight);
+    // Update preview canvas dimensions
+    framePreview.width = Math.round(previewWidth);
+    framePreview.height = Math.round(previewHeight);
     
-    // Immediately process the halftone frame
+    // Center the preview canvas
+    framePreview.style.position = 'absolute';
+    framePreview.style.left = '50%';
+    framePreview.style.top = '50%';
+    framePreview.style.transform = 'translate(-50%, -50%)';
+    
+    // Draw the current frame
+    const ctx = framePreview.getContext('2d');
+    ctx.drawImage(videoElement, 0, 0, framePreview.width, framePreview.height);
+    
+    // Process the halftone frame
     processFrame();
   }
 
@@ -277,36 +287,48 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  function setupCanvasDimensions(width, height) {
+  function setupCanvasDimensions(originalWidth, originalHeight) {
     const container = document.querySelector('.canvas-container');
-    const maxWidth = container.clientWidth - 32; // Account for padding
-    const maxHeight = container.clientHeight - 32; // Account for padding
-    const aspectRatio = width / height;
+    const containerWidth = container.clientWidth - 32; // Account for padding
+    const containerHeight = container.clientHeight - 32; // Account for padding
     
-    let newWidth = width;
-    let newHeight = height;
+    // Calculate the scaling factor to fit the image/video within the container
+    const scaleWidth = containerWidth / originalWidth;
+    const scaleHeight = containerHeight / originalHeight;
+    const scale = Math.min(scaleWidth, scaleHeight);
     
-    // Scale down if needed while maintaining aspect ratio
-    if (width > maxWidth || height > maxHeight) {
-      if (maxWidth / maxHeight > aspectRatio) {
-        // Height is the limiting factor
-        newHeight = maxHeight;
-        newWidth = maxHeight * aspectRatio;
-      } else {
-        // Width is the limiting factor
-        newWidth = maxWidth;
-        newHeight = maxWidth / aspectRatio;
-      }
-    }
+    // Calculate new dimensions while maintaining aspect ratio
+    let newWidth = Math.round(originalWidth * scale);
+    let newHeight = Math.round(originalHeight * scale);
     
     // Ensure minimum dimensions
-    newWidth = Math.max(newWidth, 200);
-    newHeight = Math.max(newHeight, 200);
+    const minDimension = 200;
+    if (newWidth < minDimension || newHeight < minDimension) {
+        const minScale = minDimension / Math.min(newWidth, newHeight);
+        newWidth = Math.round(newWidth * minScale);
+        newHeight = Math.round(newHeight * minScale);
+    }
     
+    // Update canvas dimensions
     halftoneCanvas.width = newWidth;
     halftoneCanvas.height = newHeight;
+    
+    // Set the canvas style dimensions to match
     halftoneCanvas.style.width = `${newWidth}px`;
     halftoneCanvas.style.height = `${newHeight}px`;
+    
+    // Center the canvas in the container
+    halftoneCanvas.style.position = 'absolute';
+    halftoneCanvas.style.left = '50%';
+    halftoneCanvas.style.top = '50%';
+    halftoneCanvas.style.transform = 'translate(-50%, -50%)';
+    
+    // Log dimensions for debugging
+    console.log(`Original: ${originalWidth}x${originalHeight}`);
+    console.log(`Container: ${containerWidth}x${containerHeight}`);
+    console.log(`New: ${newWidth}x${newHeight} (scale: ${scale})`);
+    
+    return { width: newWidth, height: newHeight, scale };
   }
   
   function processFrame() {
