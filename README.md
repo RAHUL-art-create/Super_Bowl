@@ -54,14 +54,6 @@ https://github.com/user-attachments/assets/6589340b-73b5-4677-a3ca-91b1266a8321
 - Design retro-style graphics
 - Educational tool for understanding halftone patterns
 
-##  Contributing
-
-Contributions are welcome! Feel free to:
-- Open issues
-- Submit pull requests
-- Suggest new features
-- Improve documentation
-
 ##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
