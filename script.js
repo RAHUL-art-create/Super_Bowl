@@ -60,18 +60,44 @@ document.addEventListener('DOMContentLoaded', function() {
     recordingStartTime = Date.now();
     updateRecordingUI(true);
     
-    // Add recording time display
+    // Add recording time display with FPS and size info
     const recordingTimeDisplay = document.createElement('div');
     recordingTimeDisplay.id = 'recordingTime';
-    recordingTimeDisplay.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 4px;';
+    recordingTimeDisplay.style.cssText = 'position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 14px;';
+    
+    // Add recording info display
+    const recordingInfoDisplay = document.createElement('div');
+    recordingInfoDisplay.id = 'recordingInfo';
+    recordingInfoDisplay.style.cssText = 'position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 14px;';
+    
     halftoneCanvas.parentElement.appendChild(recordingTimeDisplay);
+    halftoneCanvas.parentElement.appendChild(recordingInfoDisplay);
+    
+    let recordedSize = 0;
     
     function updateRecordingTime() {
         if (!isRecording) return;
+        
         const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
         const minutes = Math.floor(elapsed / 60);
         const seconds = elapsed % 60;
-        recordingTimeDisplay.textContent = `Recording: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        const totalDuration = Math.floor(videoElement.duration);
+        const totalMinutes = Math.floor(totalDuration / 60);
+        const totalSeconds = totalDuration % 60;
+        
+        // Update time display
+        recordingTimeDisplay.textContent = `Recording: ${minutes}:${seconds.toString().padStart(2, '0')} / ${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
+        
+        // Update info display
+        recordedSize = (recordedChunks.reduce((size, chunk) => size + chunk.size, 0) / (1024 * 1024)).toFixed(1);
+        recordingInfoDisplay.textContent = `FPS: ${recordingFPS} | Size: ${recordedSize}MB`;
+        
+        // Stop recording if we reach the video duration
+        if (elapsed >= totalDuration) {
+            stopVideoRecording();
+            return;
+        }
+        
         requestAnimationFrame(updateRecordingTime);
     }
     updateRecordingTime();
@@ -93,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
         isRecording = false;
         updateRecordingUI(false);
         recordingTimeDisplay.remove();
+        recordingInfoDisplay.remove();
     };
 
     mediaRecorder.start(1000);
@@ -100,9 +127,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function stopVideoRecording() {
     if (mediaRecorder && isRecording) {
-      mediaRecorder.stop();
-      isRecording = false;
-      updateRecordingUI(false);
+        mediaRecorder.stop();
+        isRecording = false;
+        updateRecordingUI(false);
+        const recordingTimeDisplay = document.getElementById('recordingTime');
+        const recordingInfoDisplay = document.getElementById('recordingInfo');
+        if (recordingTimeDisplay) recordingTimeDisplay.remove();
+        if (recordingInfoDisplay) recordingInfoDisplay.remove();
     }
   }
   
