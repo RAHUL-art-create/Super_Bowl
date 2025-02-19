@@ -344,23 +344,24 @@ canvas {
   gap: 8px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 16px;
-  font-weight: 600;
-  background: rgba(145, 143, 143, 0.884);
-  padding: 8px 12px;
+  font-weight: 800;
+  background: rgba(59, 59, 59, 0.678);
+  padding: 8px 8px;
   border-radius: 20px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(165, 70, 194, 0.712);
 }
 
 .credits-text {
-  color: var(--primary-color);
   text-decoration: none;
   display: flex;
   gap: 8px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
 }
 
 .word-container {
   perspective: 1000px;
   display: inline-block;
+  filter: brightness(1.2) contrast(1.1);
 }
 
 .word {
@@ -374,72 +375,81 @@ canvas {
   transition: all 0.3s ease;
 }
 
+@keyframes fluidGradient {
+  0% {
+    background-image: linear-gradient(45deg, #ffffff, #333333, #ffffff);
+    background-size: 200% 100%;
+    background-position: 0% 50%;
+  }
+  50% {
+    background-image: linear-gradient(45deg, #ffffff, #333333, #ffffff);
+    background-size: 200% 100%;
+    background-position: 100% 50%;
+  }
+  100% {
+    background-image: linear-gradient(45deg, #ffffff, #333333, #ffffff);
+    background-size: 200% 100%;
+    background-position: 0% 50%;
+  }
+}
+
 .word.made {
-  animation: flipMade 3s infinite;
+  animation: flipMade 3s infinite, fluidGradient 3s infinite;
   animation-delay: 0s;
-  background-image: linear-gradient(45deg, #2196F3, #d40000);
+  background-size: 200% 100%;
 }
 
 .word.by {
-  animation: flipBy 3s infinite;
+  animation: flipBy 3s infinite, fluidGradient 3s infinite;
   animation-delay: 1s;
-  background-image: linear-gradient(45deg, #101111, #e7eaec);
+  background-size: 200% 100%;
 }
 
 .word.rahul {
-  animation: flipRahul 3s infinite;
+  animation: flipRahul 3s infinite, fluidGradient 3s infinite;
   animation-delay: 2s;
-  background-image: linear-gradient(45deg, #cf22df, #742fe4);
+  background-size: 200% 100%;
 }
 
 @keyframes flipMade {
   0%, 30% {
     transform: rotateX(0deg);
-    background-image: linear-gradient(45deg, #e72657, #db71a2);
   }
   40%, 50% {
     transform: rotateX(360deg);
-    background-image: linear-gradient(135deg, #dd484f, #c221f3b2);
   }
   60%, 100% {
     transform: rotateX(0deg);
-    background-image: linear-gradient(45deg, #2196F3, #00BCD4);
   }
 }
 
 @keyframes flipBy {
   0%, 30% {
     transform: rotateX(0deg);
-    background-image: linear-gradient(45deg, #0c0b0c, #b4bbb4);
   }
   40%, 50% {
     transform: rotateX(360deg);
-    background-image: linear-gradient(135deg, #e06cb0, #df1526);
   }
   60%, 100% {
     transform: rotateX(0deg);
-    background-image: linear-gradient(45deg, #127380, #472cdf);
   }
 }
 
 @keyframes flipRahul {
   0%, 30% {
     transform: rotateX(0deg);
-    background-image: linear-gradient(45deg, #e94545, #132c7c);
   }
   40%, 50% {
     transform: rotateX(360deg);
-    background-image: linear-gradient(135deg, #f01e3a, #e46f38);
   }
   60%, 100% {
     transform: rotateX(0deg);
-    background-image: linear-gradient(45deg, #e248a2, #f14abf);
   }
 }
 
 .credits-text:hover .word {
   animation-play-state: paused;
-  opacity: 0.8;
+  filter: brightness(1.4);
 }
 
 .credits-text:hover {
@@ -457,26 +467,18 @@ canvas {
     transform: none;
     justify-content: center;
     border-radius: 0;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(0, 0, 0, 0.85);
     padding: 12px;
     margin: 0;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
   }
   
   .word {
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 800;
   }
   
   .credits-text {
     gap: 12px;
-  }
-}
-
-/* Fix for iOS Safari bottom bar */
-@supports (-webkit-touch-callout: none) {
-  .credits {
-    bottom: env(safe-area-inset-bottom, 0);
-    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
   }
 }

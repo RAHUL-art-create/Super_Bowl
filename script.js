@@ -385,128 +385,173 @@ document.addEventListener('DOMContentLoaded', function() {
     targetCanvas.width = targetWidth;
     targetCanvas.height = targetHeight;
     
-    // Draw the full‑resolution image/video onto a temporary canvas.
+    // Draw the full‑resolution image/video onto a temporary canvas
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = targetWidth;
     tempCanvas.height = targetHeight;
     const tempCtx = tempCanvas.getContext('2d');
     
     if (isVideo) {
-      tempCtx.drawImage(videoElement, 0, 0, targetWidth, targetHeight);
+        tempCtx.drawImage(videoElement, 0, 0, targetWidth, targetHeight);
     } else {
-      tempCtx.drawImage(imageElement, 0, 0, targetWidth, targetHeight);
+        tempCtx.drawImage(imageElement, 0, 0, targetWidth, targetHeight);
     }
     
     const imgData = tempCtx.getImageData(0, 0, targetWidth, targetHeight);
     const data = imgData.data;
     
+    // Enhanced image processing
     const brightnessAdj = parseInt(brightness.value, 10);
-    const contrastAdj   = parseInt(contrast.value, 10);
-    const gammaValNum   = parseFloat(gamma.value);
+    const contrastAdj = parseInt(contrast.value, 10);
+    const gammaValNum = parseFloat(gamma.value);
     const contrastFactor = (259 * (contrastAdj + 255)) / (255 * (259 - contrastAdj));
     
-    // Compute grayscale value per pixel.
+    // Compute grayscale with enhanced color sensitivity
     const grayData = new Float32Array(targetWidth * targetHeight);
+    const lumR = 0.299, lumG = 0.587, lumB = 0.114; // Standard luminance weights
+    
     for (let i = 0; i < data.length; i += 4) {
-      const r = data[i], g = data[i+1], b = data[i+2];
-      let gray = 0.299 * r + 0.587 * g + 0.114 * b;
-      gray = contrastFactor * (gray - 128) + 128 + brightnessAdj;
-      gray = Math.max(0, Math.min(255, gray));
-      gray = 255 * Math.pow(gray / 255, 1 / gammaValNum);
-      grayData[i / 4] = gray;
+        const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+        
+        // Enhanced color processing
+        let gray = Math.pow(r/255, gammaValNum) * lumR + 
+                  Math.pow(g/255, gammaValNum) * lumG + 
+                  Math.pow(b/255, gammaValNum) * lumB;
+        
+        // Apply contrast and brightness with better dynamic range
+        gray = ((gray * 255 - 128) * contrastFactor + 128 + brightnessAdj) / 255;
+        gray = Math.max(0, Math.min(1, gray));
+        
+        // Apply alpha channel consideration
+        gray = gray * (a / 255);
+        
+        grayData[i / 4] = gray * 255;
     }
     
-    // Divide the image into grid cells.
+    // Enhanced grid processing
     const grid = parseInt(gridSize.value, 10) * scaleFactor;
     const numCols = Math.ceil(targetWidth / grid);
     const numRows = Math.ceil(targetHeight / grid);
     let cellValues = new Float32Array(numRows * numCols);
     
+    // Improved cell value calculation with edge detection
     for (let row = 0; row < numRows; row++) {
-      for (let col = 0; col < numCols; col++) {
-        let sum = 0, count = 0;
-        const startY = row * grid;
-        const startX = col * grid;
-        const endY = Math.min(startY + grid, targetHeight);
-        const endX = Math.min(startX + grid, targetWidth);
-        for (let y = startY; y < endY; y++) {
-          for (let x = startX; x < endX; x++) {
-            sum += grayData[y * targetWidth + x];
-            count++;
-          }
+        for (let col = 0; col < numCols; col++) {
+            let sum = 0, count = 0;
+            let edgeValue = 0;
+            const startY = row * grid;
+            const startX = col * grid;
+            const endY = Math.min(startY + grid, targetHeight);
+            const endX = Math.min(startX + grid, targetWidth);
+            
+            // Calculate local contrast and edge detection
+            for (let y = startY; y < endY; y++) {
+                for (let x = startX; x < endX; x++) {
+                    const idx = y * targetWidth + x;
+                    const val = grayData[idx];
+                    sum += val;
+                    count++;
+                    
+                    // Simple edge detection
+                    if (x < endX - 1 && y < endY - 1) {
+                        const rightVal = grayData[idx + 1];
+                        const bottomVal = grayData[idx + targetWidth];
+                        edgeValue += Math.abs(val - rightVal) + Math.abs(val - bottomVal);
+                    }
+                }
+            }
+            
+            // Combine average value with edge information
+            const avgValue = sum / count;
+            const edgeFactor = Math.min(1, edgeValue / (count * 255 * 0.5));
+            cellValues[row * numCols + col] = avgValue * (1 - edgeFactor * 0.3);
         }
-        cellValues[row * numCols + col] = sum / count;
-      }
     }
     
-    // Apply smoothing if enabled.
+    // Apply enhanced smoothing if enabled
     const smoothingStrength = parseFloat(smoothing.value);
     if (smoothingStrength > 0) {
-      cellValues = applyBoxBlur(cellValues, numRows, numCols, smoothingStrength);
+        cellValues = applyEnhancedSmoothing(cellValues, numRows, numCols, smoothingStrength);
     }
     
-    // Apply dithering if selected.
+    // Apply dithering with improved patterns
     const selectedDither = ditherType.value;
     if (selectedDither === "FloydSteinberg") {
-      applyFloydSteinbergDithering(cellValues, numRows, numCols);
+        applyFloydSteinbergDithering(cellValues, numRows, numCols);
     } else if (selectedDither === "Ordered") {
-      applyOrderedDithering(cellValues, numRows, numCols);
+        applyOrderedDithering(cellValues, numRows, numCols);
     } else if (selectedDither === "Noise") {
-      applyNoiseDithering(cellValues, numRows, numCols);
+        applyNoiseDithering(cellValues, numRows, numCols);
     }
     
-    // Draw the halftone dots.
+    // Draw enhanced halftone dots
     const ctx = targetCanvas.getContext('2d');
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, targetWidth, targetHeight);
     
     for (let row = 0; row < numRows; row++) {
-      for (let col = 0; col < numCols; col++) {
-        const brightnessValue = cellValues[row * numCols + col];
-        const norm = brightnessValue / 255;
-        const maxRadius = grid / 2;
-        const radius = maxRadius * (1 - norm);
-        if (radius > 0.5) {
-          ctx.beginPath();
-          const centerX = col * grid + grid / 2;
-          const centerY = row * grid + grid / 2;
-          ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-          ctx.fillStyle = 'black';
-          ctx.fill();
+        for (let col = 0; col < numCols; col++) {
+            const brightnessValue = cellValues[row * numCols + col];
+            const norm = brightnessValue / 255;
+            const maxRadius = grid / 2;
+            
+            // Enhanced dot size calculation
+            const radius = maxRadius * Math.pow(1 - norm, 1.2); // Adjusted power for better contrast
+            
+            if (radius > 0.5) {
+                ctx.beginPath();
+                const centerX = col * grid + grid / 2;
+                const centerY = row * grid + grid / 2;
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'black';
+                ctx.fill();
+            }
         }
-      }
     }
   }
   
-  // 3× Box Blur for smoothing grid cell values.
-  function applyBoxBlur(cellValues, numRows, numCols, strength) {
+  function applyEnhancedSmoothing(cellValues, numRows, numCols, strength) {
     let result = new Float32Array(cellValues);
     const passes = Math.floor(strength);
+    const kernel = [
+        [0.0625, 0.125, 0.0625],
+        [0.125,  0.25,  0.125],
+        [0.0625, 0.125, 0.0625]
+    ];
+    
     for (let p = 0; p < passes; p++) {
-      let temp = new Float32Array(result.length);
-      for (let row = 0; row < numRows; row++) {
-        for (let col = 0; col < numCols; col++) {
-          let sum = 0, count = 0;
-          for (let dy = -1; dy <= 1; dy++) {
-            for (let dx = -1; dx <= 1; dx++) {
-              const r = row + dy, c = col + dx;
-              if (r >= 0 && r < numRows && c >= 0 && c < numCols) {
-                sum += result[r * numCols + c];
-                count++;
-              }
+        let temp = new Float32Array(result.length);
+        for (let row = 0; row < numRows; row++) {
+            for (let col = 0; col < numCols; col++) {
+                let sum = 0, weightSum = 0;
+                
+                for (let ky = -1; ky <= 1; ky++) {
+                    for (let kx = -1; kx <= 1; kx++) {
+                        const r = row + ky;
+                        const c = col + kx;
+                        
+                        if (r >= 0 && r < numRows && c >= 0 && c < numCols) {
+                            const weight = kernel[ky+1][kx+1];
+                            sum += result[r * numCols + c] * weight;
+                            weightSum += weight;
+                        }
+                    }
+                }
+                
+                temp[row * numCols + col] = sum / weightSum;
             }
-          }
-          temp[row * numCols + col] = sum / count;
         }
-      }
-      result = temp;
+        result = temp;
     }
+    
+    // Apply fractional smoothing
     const frac = strength - Math.floor(strength);
     if (frac > 0) {
-      for (let i = 0; i < result.length; i++) {
-        result[i] = cellValues[i] * (1 - frac) + result[i] * frac;
-      }
+        for (let i = 0; i < result.length; i++) {
+            result[i] = cellValues[i] * (1 - frac) + result[i] * frac;
+        }
     }
+    
     return result;
   }
   
