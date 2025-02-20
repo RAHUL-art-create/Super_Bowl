@@ -709,4 +709,128 @@ document.addEventListener('DOMContentLoaded', function() {
       console.error("Error loading default video:", e);
     });
   })();
+
+  // Drag and Drop functionality
+  const uploadArea = document.querySelector('.upload-area');
+  const fileInput = document.querySelector('.upload-input');
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, preventDefaults, false);
+    document.body.addEventListener(eventName, preventDefaults, false);
+  });
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  ['dragenter', 'dragover'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, highlight, false);
+  });
+
+  ['dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, unhighlight, false);
+  });
+
+  function highlight() {
+    uploadArea.classList.add('drag-active');
+  }
+
+  function unhighlight() {
+    uploadArea.classList.remove('drag-active');
+  }
+
+  uploadArea.addEventListener('drop', handleDrop, false);
+
+  function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    handleFiles(files);
+  }
+
+  function handleFiles(files) {
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+        processUploadedFile(file);
+      } else {
+        alert('Please upload an image or video file.');
+      }
+    }
+  }
+
+  function processUploadedFile(file) {
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          handleImageUpload(img);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    } else if (file.type.startsWith('video/')) {
+      const video = document.createElement('video');
+      video.src = URL.createObjectURL(file);
+      video.onloadedmetadata = function() {
+        handleVideoUpload(video);
+      };
+    }
+  }
+
+  // Update the existing file input handler to use the new processUploadedFile function
+  fileInput.addEventListener('change', function(e) {
+    if (this.files.length > 0) {
+      processUploadedFile(this.files[0]);
+    }
+  });
+
+  function handleImageUpload(img) {
+    // Clear any existing video state
+    if (videoElement) {
+      videoElement.pause();
+      cancelAnimationFrame(animationFrameId);
+    }
+    
+    // Reset video-related state
+    isVideo = false;
+    videoElement = null;
+    imageElement = img;
+    
+    // Hide video controls
+    videoFrameControls.style.display = 'none';
+    exportType.value = 'png';
+    saveButton.textContent = 'Export PNG';
+    
+    // Setup canvas and process the image
+    setupCanvasDimensions(img.width, img.height);
+    processFrame();
+  }
+
+  function handleVideoUpload(video) {
+    // Clear any existing image state
+    imageElement = null;
+    isVideo = true;
+    videoElement = video;
+    
+    // Setup video controls
+    frameSlider.min = 0;
+    frameSlider.max = video.duration;
+    frameSlider.step = 0.1;
+    
+    // Show frame controls for PNG export mode
+    if (exportType.value === 'png') {
+      videoFrameControls.style.display = 'block';
+      video.pause();
+      isPaused = true;
+      updateFramePreview();
+    } else {
+      video.play();
+      processVideoFrame();
+    }
+    
+    // Update button text based on export type
+    saveButton.textContent = exportType.value === 'png' ? 'Export PNG' : 'Start Recording';
+  }
 });

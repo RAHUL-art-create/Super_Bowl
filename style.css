@@ -61,11 +61,36 @@ body {
   padding: calc(var(--spacing-unit) * 1.5);
   text-align: center;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.upload-area:hover {
+.upload-area::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--primary-color);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.upload-area.drag-active {
   border-color: var(--primary-color);
   background-color: rgba(33, 150, 243, 0.05);
+  transform: scale(1.02);
+}
+
+.upload-area.drag-active::before {
+  opacity: 0.05;
+}
+
+.upload-area.drag-active .upload-label {
+  transform: scale(1.1);
 }
 
 .upload-label {
@@ -75,14 +100,56 @@ body {
   gap: 8px;
   cursor: pointer;
   color: var(--secondary-color);
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
 }
 
 .upload-icon {
   font-size: 24px;
+  transition: transform 0.3s ease;
+}
+
+.upload-area:hover .upload-icon,
+.upload-area.drag-active .upload-icon {
+  transform: scale(1.2);
 }
 
 .upload-input {
   display: none;
+}
+
+/* Upload Area Animation */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.upload-area.drag-active {
+  animation: pulse 1.5s infinite;
+}
+
+/* Upload Progress (if needed later) */
+.upload-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  background: var(--primary-color);
+  transition: width 0.3s ease;
+  opacity: 0;
+}
+
+.upload-area.uploading .upload-progress {
+  opacity: 1;
 }
 
 /* Control Groups */
