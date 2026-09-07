@@ -710,3 +710,140 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   })();
 });
+
+/* ===== Credits: "Rahul" rendered as living halftone dots =====
+   The name is rasterized offscreen, sampled on a grid, and redrawn
+   as dots whose size/color ride a traveling sine wave — a mini
+   version of the editor's own halftone effect. */
+(function initCreditsHalftone() {
+  const canvas = document.getElementById('creditsHalftone');
+  if (!canvas) return;
+
+  const TEXT = 'Rahul';
+  const FONT = '700 20px Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+  const GRID = 3;                 // dot spacing (CSS px)
+  const MAX_R = 1.35;             // max dot radius (CSS px)
+  const COLOR_A = [144, 202, 249]; // #90CAF9 light blue
+  const COLOR_B = [33, 150, 243];  // #2196F3 brand blue
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  function build() {
+    const dpr = window.devicePixelRatio || 1;
+
+    // Rasterize the text offscreen
+    const off = document.createElement('canvas');
+    const offCtx = off.getContext('2d');
+    offCtx.font = FONT;
+    const cssW = Math.ceil(offCtx.measureText(TEXT).width) + 4;
+    const cssH = 24;
+
+    off.width = cssW * dpr;
+    off.height = cssH * dpr;
+    offCtx.scale(dpr, dpr);
+    offCtx.font = FONT;
+    offCtx.textBaseline = 'middle';
+    offCtx.fillStyle = '#000';
+    offCtx.fillText(TEXT, 2, cssH / 2 + 1);
+
+    // Size the visible canvas (crisp on retina)
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    canvas.width = cssW * dpr;
+    canvas.height = cssH * dpr;
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    // Sample alpha on a grid -> dot list
+    const img = offCtx.getImageData(0, 0, off.width, off.height).data;
+    const dots = [];
+    for (let y = GRID / 2; y < cssH; y += GRID) {
+      for (let x = GRID / 2; x < cssW; x += GRID) {
+        const px = Math.min(off.width - 1, Math.round(x * dpr));
+        const py = Math.min(off.height - 1, Math.round(y * dpr));
+        const alpha = img[(py * off.width + px) * 4 + 3] / 255;
+        if (alpha > 0.25) {
+          dots.push({ x, y, r: alpha * MAX_R });
+        }
+      }
+    }
+    return { ctx, dots };
+  }
+
+  let state = build();
+  let hover = 0;
+  let hoverTarget = 0;
+  let start = performance.now();
+  let rafId = null;
+
+  const link = canvas.closest('.credits-text');
+  if (link) {
+    link.addEventListener('mouseenter', () => { hoverTarget = 1; });
+    link.addEventListener('mouseleave', () => { hoverTarget = 0; });
+  }
+
+  function drawDots(getRadiusAndColor) {
+    const { ctx, dots } = state;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const d of dots) {
+      const out = getRadiusAndColor(d);
+      if (out.r <= 0.05) continue;
+      ctx.fillStyle = out.color;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, out.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function frame(now) {
+    const t = (now - start) / 1000;
+    hover += (hoverTarget - hover) * 0.08;
+
+    const amp = 0.28 + hover * 0.35;   // wave deepens on hover
+    const speed = 2.2 + hover * 2.5;   // and travels faster
+
+    drawDots((d) => {
+      const wave = (Math.sin(t * speed - d.x * 0.09) + 1) / 2; // 0..1 across the name
+      const r = d.r * (1 - amp + amp * 2 * wave);
+      const cr = Math.round(COLOR_A[0] + (COLOR_B[0] - COLOR_A[0]) * wave);
+      const cg = Math.round(COLOR_A[1] + (COLOR_B[1] - COLOR_A[1]) * wave);
+      const cb = Math.round(COLOR_A[2] + (COLOR_B[2] - COLOR_A[2]) * wave);
+      return { r, color: 'rgb(' + cr + ',' + cg + ',' + cb + ')' };
+    });
+
+    rafId = requestAnimationFrame(frame);
+  }
+
+  function renderStatic() {
+    drawDots((d) => ({ r: d.r, color: '#2196F3' }));
+  }
+
+  // Rebuild dots if devicePixelRatio changes (zoom, monitor move)
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      state = build();
+      if (reduceMotion.matches) renderStatic();
+    }, 150);
+  });
+
+  if (typeof reduceMotion.addEventListener === 'function') {
+    reduceMotion.addEventListener('change', () => {
+      if (reduceMotion.matches) {
+        if (rafId) cancelAnimationFrame(rafId);
+        renderStatic();
+      } else {
+        start = performance.now();
+        rafId = requestAnimationFrame(frame);
+      }
+    });
+  }
+
+  if (reduceMotion.matches) {
+    renderStatic();
+  } else {
+    rafId = requestAnimationFrame(frame);
+  }
+})();
