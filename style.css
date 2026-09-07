@@ -355,82 +355,58 @@ canvas {
 }
 
 .credits-text {
-  position: relative;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  overflow: hidden;
+  align-items: baseline;
+  gap: 8px;
   text-decoration: none;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 13.5px;
-  font-weight: 500;
-  letter-spacing: 0.2px;
-  color: rgba(255, 255, 255, 0.75);
-  background: rgba(18, 18, 22, 0.55);
-  backdrop-filter: blur(12px) saturate(1.4);
-  -webkit-backdrop-filter: blur(12px) saturate(1.4);
-  padding: 10px 16px;
+  background: #101014;
+  padding: 12px 22px;
   border-radius: 100px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
               box-shadow 0.35s ease,
-              border-color 0.35s ease,
-              background 0.35s ease,
-              color 0.35s ease;
+              border-color 0.35s ease;
 }
 
-/* Soft sheen sweep every few seconds — personality without distraction */
-.credits-text::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.12), transparent);
-  transform: translateX(-160%) skewX(-20deg);
-  animation: sheen 7s ease-in-out infinite;
-  pointer-events: none;
+/* Small-caps label — editorial typographic contrast */
+.credits-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  transition: color 0.3s ease;
 }
 
-@keyframes sheen {
-  0%, 60% {
-    transform: translateX(-160%) skewX(-20deg);
-  }
-  80%, 100% {
-    transform: translateX(320%) skewX(-20deg);
-  }
-}
-
+/* Name with a slow, subtle gradient shimmer */
 .credits-name {
+  font-size: 15px;
   font-weight: 700;
-  background: linear-gradient(90deg, #90CAF9, #2196F3);
+  letter-spacing: 0.2px;
+  background: linear-gradient(90deg, #90CAF9, #2196F3 45%, #90CAF9);
+  background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  animation: nameShimmer 6s linear infinite;
 }
 
-.credits-icon {
-  width: 13px;
-  height: 13px;
-  margin-left: 2px;
-  opacity: 0.55;
-  transition: opacity 0.3s ease, transform 0.3s ease, color 0.3s ease;
+@keyframes nameShimmer {
+  to {
+    background-position: 200% center;
+  }
 }
 
 .credits-text:hover {
   transform: translateY(-3px);
-  background: rgba(18, 18, 22, 0.8);
   border-color: rgba(33, 150, 243, 0.45);
-  box-shadow: 0 10px 30px rgba(33, 150, 243, 0.28);
-  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(33, 150, 243, 0.25);
 }
 
-.credits-text:hover .credits-icon {
-  opacity: 1;
-  transform: scale(1.12);
-  color: #64B5F6;
+.credits-text:hover .credits-label {
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .credits-text:focus-visible {
@@ -443,11 +419,11 @@ canvas {
   .credits {
     animation: none;
   }
-  .credits-text::after {
+  .credits-name {
     animation: none;
   }
   .credits-text,
-  .credits-icon {
+  .credits-label {
     transition: none;
   }
 }
@@ -467,8 +443,7 @@ canvas {
     justify-content: center;
     border-radius: 0;
     padding: 12px;
-    font-size: 14px;
-    background: rgba(10, 10, 14, 0.85);
+    background: #0c0c10;
     border: none;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
